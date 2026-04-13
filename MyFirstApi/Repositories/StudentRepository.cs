@@ -56,12 +56,7 @@ namespace MyFirstApi.Repositories
                 """;
 
             using var connection = context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(sql, student);
-
-            if (affectedRows == 0)
-            {
-                throw new KeyNotFoundException($"No student found with ID {student.Id} to update.");
-            }
+            await connection.ExecuteAsync(sql, student);
         }
 
         public async Task DeleteStudentAsync(int id)
@@ -69,12 +64,7 @@ namespace MyFirstApi.Repositories
             const string sql = "DELETE FROM Students WHERE Id = @Id";
 
             using var connection = context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(sql, new { Id = id });
-
-            if (affectedRows == 0)
-            {
-                throw new KeyNotFoundException($"No student found with ID {id} to delete.");
-            }
+            await connection.ExecuteAsync(sql, new { Id = id });
         }
     }
 }

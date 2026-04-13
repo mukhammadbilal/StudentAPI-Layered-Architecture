@@ -1,4 +1,5 @@
-﻿using MyFirstApi.Models;
+﻿using MyFirstApi.Exceptions;
+using MyFirstApi.Models;
 using MyFirstApi.Repositories;
 
 namespace MyFirstApi.Services;
@@ -15,14 +16,16 @@ public class StudentService : IStudentService
     public async Task AddStudentAsync(Student student)
     {
         if (student == null)
-        {
-            throw new ArgumentNullException(nameof(student));
-        }
+            throw new ValidationException("Student is null");
 
-        if (string.IsNullOrEmpty(student.FirstName))
-        {
-            throw new ArgumentException("First name is required");
-        }
+        if (string.IsNullOrWhiteSpace(student.FirstName))
+            throw new ValidationException("First name is required.");
+
+        if (string.IsNullOrWhiteSpace(student.LastName))
+            throw new ValidationException("Last name is required.");
+
+        if (student.Age <= 0)
+            throw new ValidationException("Age must be a positive number.");
 
         await studentRepository.AddStudentAsync(student);
     }
@@ -33,11 +36,16 @@ public class StudentService : IStudentService
 
     public async Task<Student> GetStudentByIdAsync(int id)
     {
+        if (id <= 0)
+        {
+            throw new ValidationException("Invalid student ID.");
+        }
+
         var student = await studentRepository.GetStudentByIdAsync(id);
 
         if (student == null)
         {
-            throw new KeyNotFoundException($"Student with ID {id} not found.");
+            throw new NotFoundException($"Student with ID {id} not found.");
         }
 
         return student;
@@ -45,9 +53,16 @@ public class StudentService : IStudentService
 
     public async Task UpdateStudentAsync(Student student)
     {
-        if (student == null || student.Id <= 0)
+        if (student.Id <= 0)
         {
-            throw new ArgumentException("Invalid student data.");
+            throw new ValidationException("Invalid student ID.");
+        }
+
+        var maybeStudent = await studentRepository.GetStudentByIdAsync(student.Id);
+
+        if (maybeStudent == null)
+        {
+            throw new NotFoundException($"Student with ID {student.Id} not found.");
         }
 
         await studentRepository.UpdateStudentAsync(student);
@@ -57,7 +72,14 @@ public class StudentService : IStudentService
     {
         if (id <= 0)
         {
-            throw new ArgumentException("Invalid ID.");
+            throw new ValidationException("Invalid student ID.");
+        }
+
+        var maybeStudent = await studentRepository.GetStudentByIdAsync(id);
+
+        if (maybeStudent == null)
+        {
+            throw new NotFoundException($"Student with ID {id} not found.");
         }
 
         await studentRepository.DeleteStudentAsync(id);

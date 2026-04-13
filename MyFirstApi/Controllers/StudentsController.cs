@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MyFirstApi.Data;
+using MyFirstApi.Exceptions;
 using MyFirstApi.Models;
 using MyFirstApi.Services;
 
@@ -24,13 +24,13 @@ public class StudentsController : ControllerBase
             await studentService.AddStudentAsync(student);
             return CreatedAtAction(nameof(GetStudentById), new { id = student.Id }, student);
         }
-        catch (ArgumentException ex)
+        catch (ValidationException ex)
         {
             return BadRequest(ex.Message);
         }
-        catch (Exception)
+        catch (ServiceException ex)
         {
-            return StatusCode(500, "An internal error occurred.");
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -56,13 +56,17 @@ public class StudentsController : ControllerBase
             var student = await studentService.GetStudentByIdAsync(id);
             return Ok(student);
         }
-        catch (KeyNotFoundException ex)
+        catch (ValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (NotFoundException ex)
         {
             return NotFound(ex.Message);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return StatusCode(500, "Internal server error.");
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -74,13 +78,13 @@ public class StudentsController : ControllerBase
             await studentService.UpdateStudentAsync(student);
             return NoContent();
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (ArgumentException ex)
+        catch (ValidationException ex)
         {
             return BadRequest(ex.Message);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
         }
         catch (Exception)
         {
@@ -96,7 +100,11 @@ public class StudentsController : ControllerBase
             await studentService.DeleteStudentAsync(id);
             return NoContent();
         }
-        catch (KeyNotFoundException ex)
+        catch (ValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (NotFoundException ex)
         {
             return NotFound(ex.Message);
         }
